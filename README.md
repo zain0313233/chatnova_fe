@@ -4,7 +4,7 @@ Next.js frontend application for AI Chat Module with Subscription Management.
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS (to be added)
 - **HTTP Client**: Axios
