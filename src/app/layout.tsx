@@ -6,8 +6,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AI Chat Module',
-  description: 'AI Chat Module with Subscription Management',
+  title: 'ChatNova',
+  description: 'ChatNova AI Chat Application',
 };
 
 export default function RootLayout({
