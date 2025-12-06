@@ -60,7 +60,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               </svg>
             </button>
             <h1 className="text-xl font-bold text-purple-600">
-              AI Chat Module
+              ChatNova
             </h1>
           </div>
 
