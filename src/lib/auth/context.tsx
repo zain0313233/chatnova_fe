@@ -7,6 +7,7 @@ import { login as loginAction, register, logout } from '@/store/features/auth/au
 
 interface AuthContextType {
   user: AuthResponse['user'] | null;
+  userType: 'user' | 'admin' | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
@@ -20,7 +21,7 @@ const USER_STORAGE_KEY = 'auth_user';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { user, loading } = useAppSelector((state) => state.auth);
+  const { user, userType, loading } = useAppSelector((state) => state.auth);
 
   // Load user from local storage on mount (handled by initial state in slice, but we might want verification later)
   // For now, the slice initial state handles loading from localStorage.
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        userType,
         loading,
         login: handleLogin,
         register: handleRegister,

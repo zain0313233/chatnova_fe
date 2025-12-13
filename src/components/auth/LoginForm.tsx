@@ -11,7 +11,7 @@ type LoginFormData = z.infer<typeof LoginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, userType } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -56,7 +56,13 @@ export default function LoginForm() {
     setIsLoading(true);
     try {
       await login(formData.email, formData.password);
-      router.push('/dashboard');
+      // Redirect based on user type
+      const currentUserType = localStorage.getItem('user_type') || 'user';
+      if (currentUserType === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error: any) {
       let errorMessage = 'Login failed. Please try again.';
 

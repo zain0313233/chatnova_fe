@@ -3,6 +3,7 @@ import { authApi, AuthResponse, LoginCredentials, RegisterData } from '@/lib/api
 
 interface AuthState {
     user: AuthResponse['user'] | null;
+    userType: 'user' | 'admin' | null;
     loading: boolean;
     error: string | null;
     isAuthenticated: boolean;
@@ -20,8 +21,15 @@ const loadUserFromStorage = (): AuthResponse['user'] | null => {
     }
 };
 
+// Helper to load userType from localStorage
+const loadUserTypeFromStorage = (): 'user' | 'admin' | null => {
+    if (typeof window === 'undefined') return null;
+    return (localStorage.getItem('user_type') as 'user' | 'admin' | null) || null;
+};
+
 const initialState: AuthState = {
     user: loadUserFromStorage(),
+    userType: loadUserTypeFromStorage(),
     loading: false,
     error: null,
     isAuthenticated: !!loadUserFromStorage(),
@@ -33,7 +41,10 @@ export const login = createAsyncThunk(
         try {
             const response = await authApi.login(credentials);
             localStorage.setItem('auth_user', JSON.stringify(response.user));
-            return response.user;
+            if (response.userType) {
+                localStorage.setItem('user_type', response.userType);
+            }
+            return { user: response.user, userType: response.userType || 'user' };
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || 'Login failed');
         }
@@ -60,6 +71,9 @@ export const logout = createAsyncThunk(
             await authApi.logout();
             localStorage.removeItem('auth_user');
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_type');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || 'Logout failed');
         }
@@ -92,7 +106,8 @@ const authSlice = createSlice({
             })
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload;
+                state.user = action.payload.user;
+                state.userType = action.payload.userType;
                 state.isAuthenticated = true;
             })
             .addCase(login.rejected, (state, action) => {
@@ -116,8 +131,14 @@ const authSlice = createSlice({
             // Logout
             .addCase(logout.fulfilled, (state) => {
                 state.user = null;
+                state.userType = null;
                 state.isAuthenticated = false;
                 state.loading = false;
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('user_type');
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_user');
+                }
             });
     },
 });
