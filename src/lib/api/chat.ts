@@ -25,6 +25,7 @@ export const ChatHistoryItemSchema = z.object({
 
 export type ChatQuestion = z.infer<typeof ChatQuestionSchema>;
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+export type ChatResponse = ChatMessage;
 export type ChatHistoryItem = z.infer<typeof ChatHistoryItemSchema>;
 
 export const ChatSessionSchema = z.object({

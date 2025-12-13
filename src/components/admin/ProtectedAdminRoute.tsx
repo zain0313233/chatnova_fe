@@ -2,26 +2,26 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/context';
+import { useAdmin } from '@/lib/auth/adminContext';
 
-interface ProtectedRouteProps {
+interface ProtectedAdminRouteProps {
   children: React.ReactNode;
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, loading } = useAuth();
+export default function ProtectedAdminRoute({ children }: ProtectedAdminRouteProps) {
+  const { isAuthenticated, loading } = useAdmin();
   const router = useRouter();
   const hasRedirected = useRef(false);
 
   useEffect(() => {
     // Check both Redux state and token existence to prevent redirect loops
     if (!loading && !hasRedirected.current) {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
       
-      // If not authenticated OR token is missing, redirect to login
+      // If not authenticated OR token is missing, redirect to admin login
       if (!isAuthenticated || !token) {
         hasRedirected.current = true;
-        router.push('/login');
+        router.push('/admin/login');
       }
     }
   }, [isAuthenticated, loading, router]);
@@ -43,3 +43,4 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   return <>{children}</>;
 }
+

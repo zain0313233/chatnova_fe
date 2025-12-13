@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-class ApiClient {
+class AdminApiClient {
   private client: AxiosInstance;
 
   constructor() {
@@ -13,7 +13,7 @@ class ApiClient {
       },
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor to add admin auth token
     this.client.interceptors.request.use(
       config => {
         const token = this.getToken();
@@ -32,14 +32,14 @@ class ApiClient {
       response => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Handle unauthorized - clear all auth data
+          // Handle unauthorized - clear all admin auth data
           this.clearAuth();
           
-          // Only redirect if not already on login page to prevent redirect loops
+          // Only redirect if not already on admin login page
           if (typeof window !== 'undefined') {
             const currentPath = window.location.pathname;
-            if (currentPath !== '/login' && currentPath !== '/signup') {
-              window.location.href = '/login';
+            if (!currentPath.startsWith('/admin/login')) {
+              window.location.href = '/admin/login';
             }
           }
         }
@@ -50,35 +50,20 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
-  }
-
-  private clearToken(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('auth_token');
+    return localStorage.getItem('admin_token');
   }
 
   private clearAuth(): void {
     if (typeof window === 'undefined') return;
     
-    // Clear token and user from localStorage
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    
-    // Clear Redux state by dispatching logout action
-    // We need to dynamically import to avoid SSR issues
-    if (typeof window !== 'undefined') {
-      import('@/store/index').then(({ store }) => {
-        import('@/store/features/auth/authSlice').then(({ logout }) => {
-          store.dispatch(logout());
-        });
-      });
-    }
+    // Clear admin token and user from localStorage
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
   }
 
   public setToken(token: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('auth_token', token);
+    localStorage.setItem('admin_token', token);
   }
 
   public getClient(): AxiosInstance {
@@ -86,5 +71,6 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient();
-export default apiClient.getClient();
+export const adminApiClient = new AdminApiClient();
+export default adminApiClient.getClient();
+

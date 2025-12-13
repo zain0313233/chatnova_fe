@@ -18,13 +18,15 @@ export const AuthResponseSchema = z.object({
   user: z.object({
     id: z.string(),
     email: z.string(),
-    name: z.string().optional(),
+    name: z.string().optional().nullable(),
   }),
+  userType: z.enum(['user', 'admin']).optional(),
 });
 
 export type Login = z.infer<typeof LoginSchema>;
 export type Register = z.infer<typeof RegisterSchema>;
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+export type UserType = 'user' | 'admin';
 
 export const authApi = {
   // Register a new user
@@ -62,16 +64,17 @@ export const authApi = {
     return authData;
   },
 
-  // Login user
+  // Login user or admin (unified)
   login: async (data: Login): Promise<AuthResponse> => {
     const response = await apiClient.post('/api/auth/signin', data);
 
-    // Backend response structure: { message: string, data: { user: {...}, token: string } }
+    // Backend response structure: { message: string, data: { user: {...}, token: string, userType: 'user'|'admin' } }
     const responseData = response.data;
 
-    // Extract token and user from data object
+    // Extract token, user, and userType from data object
     const token = responseData?.data?.token || responseData?.token;
     const user = responseData?.data?.user || responseData?.user;
+    const userType = responseData?.data?.userType || responseData?.userType || 'user';
 
     if (!token || !user) {
       throw new Error('Invalid response format: missing token or user data');
@@ -84,18 +87,31 @@ export const authApi = {
         email: String(user.email || ''),
         name: user.name ? String(user.name) : undefined,
       },
+      userType: userType as UserType,
     };
 
-    // Store token
+    // Store token and userType
     apiClientInstance.setToken(authData.token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_type', userType);
+      // If admin, also store in admin_token for compatibility
+      if (userType === 'admin') {
+        localStorage.setItem('admin_token', authData.token);
+        localStorage.setItem('admin_user', JSON.stringify(authData.user));
+      }
+    }
 
     return authData;
   },
 
-  // Logout user
+  // Logout user or admin
   logout: (): void => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_type');
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      localStorage.removeItem('auth_user');
     }
   },
 

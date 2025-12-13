@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/context';
 import AuthLeftCard from '@/components/auth/AuthLeftCard';
@@ -8,13 +8,26 @@ import LoginForm from '@/components/auth/LoginForm';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, userType } = useAuth();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) {
-      router.push('/dashboard');
+    // Only redirect if authenticated AND token exists in localStorage
+    // This prevents redirect loops when token is cleared but Redux state hasn't updated yet
+    if (!loading && isAuthenticated && !hasRedirected.current) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (token) {
+        hasRedirected.current = true;
+        // Redirect based on user type
+        const currentUserType = userType || localStorage.getItem('user_type') || 'user';
+        if (currentUserType === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/dashboard');
+        }
+      }
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, userType]);
 
   if (loading) {
     return (

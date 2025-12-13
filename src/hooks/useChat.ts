@@ -1,42 +1,21 @@
-import { useState } from 'react';
-import { chatApi, ChatResponse } from '../lib/api/chat';
-import { handleApiError } from '../lib/utils/errors';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { sendMessage as sendMessageAction, loadHistory as loadHistoryAction } from '@/store/features/chat/chatSlice';
+import { ChatResponse } from '../lib/api/chat';
 
 export function useChat() {
-  const [messages, setMessages] = useState<ChatResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { messages, loading, error, currentSessionId } = useAppSelector((state) => state.chat);
 
   const sendMessage = async (question: string) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await chatApi.sendMessage(question);
-      setMessages(prev => [response, ...prev]);
-      return response;
-    } catch (err) {
-      const errorMessage = handleApiError(err);
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+    // We cast the result to any to avoid strict type checking on the unwrap payload vs return type for now,
+    // or we can just return the result of unwrap which is the payload.
+    // The component expects the response object.
+    const result = await dispatch(sendMessageAction({ question, sessionId: currentSessionId || undefined })).unwrap();
+    return result as ChatResponse;
   };
 
   const loadHistory = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const history = await chatApi.getHistory();
-      setMessages(history);
-    } catch (err) {
-      const errorMessage = handleApiError(err);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
+    await dispatch(loadHistoryAction()).unwrap();
   };
 
   return {
