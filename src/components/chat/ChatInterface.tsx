@@ -2,23 +2,24 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { chatApi } from '@/lib/api/chat';
-import { ChatHistoryItem } from '@/types';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { sendMessage, loadSessionMessages, clearMessages, setSessionId, loadSessions, addSession } from '@/store/features/chat/chatSlice';
+import { ChatHistoryItem, ChatSession } from '@/types';
 import ChatMessage from './ChatMessage';
 
 export default function ChatInterface() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const sessionIdParam = searchParams.get('sessionId');
   const isNewChat = searchParams.get('new') === 'true';
 
+  const { messagesBySession, loading, error, currentSessionId, isLoadingHistory, sessions } = useAppSelector((state) => state.chat);
   const [question, setQuestion] = useState('');
-  const [messages, setMessages] = useState<ChatHistoryItem[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(sessionIdParam);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Get messages for current session
+  const messages = currentSessionId ? (messagesBySession[currentSessionId] || []) : [];
 
   // Scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -29,103 +30,85 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages]);
 
+  // Load sessions on mount if not already loaded
+  useEffect(() => {
+    if (sessions.length === 0) {
+      dispatch(loadSessions());
+    }
+  }, [dispatch, sessions.length]);
+
   // Handle session changes via URL or New Chat
   useEffect(() => {
-    const loadSession = async () => {
-      if (isNewChat) {
-        setCurrentSessionId(null);
-        setMessages([]);
-        // Clean up URL
-        router.replace('/chat');
-        return;
-      }
+    if (isNewChat) {
+      dispatch(setSessionId(null));
+      dispatch(clearMessages(null));
+      router.replace('/chat');
+      return;
+    }
 
-      if (sessionIdParam) {
-        try {
-          setIsLoadingHistory(true);
-          setCurrentSessionId(sessionIdParam);
-          const msgs = await chatApi.getSessionMessages(sessionIdParam);
-          setMessages(msgs);
-        } catch (err) {
-          console.error('Failed to load session messages:', err);
-          setError('Failed to load chat history');
-        } finally {
-          setIsLoadingHistory(false);
+    if (sessionIdParam) {
+      // Only load messages if they're not already in Redux (optimization)
+      if (currentSessionId !== sessionIdParam) {
+        // Check if messages for this session already exist in Redux
+        if (!messagesBySession[sessionIdParam] || messagesBySession[sessionIdParam].length === 0) {
+          dispatch(loadSessionMessages(sessionIdParam));
+        } else {
+          // Messages already exist, just switch the session
+          dispatch(setSessionId(sessionIdParam));
         }
-      } else {
-        // No session ID, maybe load most recent or just show empty state?
-        // For now, let's just show empty state (New Chat)
-        setCurrentSessionId(null);
-        setMessages([]);
       }
-    };
-
-    loadSession();
-  }, [sessionIdParam, isNewChat, router]);
+    } else {
+      // If no sessionId in URL but sessions exist, load the most recent session
+      if (sessions.length > 0 && !currentSessionId) {
+        const mostRecentSession = sessions[0]; // Sessions are typically sorted by most recent first
+        // Check if messages already exist
+        if (!messagesBySession[mostRecentSession.id] || messagesBySession[mostRecentSession.id].length === 0) {
+          dispatch(loadSessionMessages(mostRecentSession.id));
+        } else {
+          dispatch(setSessionId(mostRecentSession.id));
+        }
+        router.replace(`/chat?sessionId=${mostRecentSession.id}`, { scroll: false });
+      } else if (sessions.length === 0) {
+        dispatch(setSessionId(null));
+        dispatch(clearMessages(null));
+      }
+    }
+  }, [sessionIdParam, isNewChat, router, dispatch, currentSessionId, sessions, messagesBySession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!question.trim() || isLoading) return;
+    if (!question.trim() || loading) return;
 
     const userQuestion = question.trim();
     setQuestion('');
-    setError(null);
-    setIsLoading(true);
-
-    // Optimistic UI
-    const tempId = Date.now().toString();
-    const optimisticMessage: ChatHistoryItem = {
-      id: tempId,
-      userId: '',
-      question: userQuestion,
-      answer: '',
-      tokens: 0,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Show optimistic message immediately
-    setMessages(prev => [...prev, optimisticMessage]);
 
     try {
-      const response = await chatApi.sendMessage(userQuestion, currentSessionId || undefined);
+      const result = await dispatch(sendMessage({ 
+        question: userQuestion, 
+        sessionId: currentSessionId || undefined 
+      })).unwrap();
 
-      // If new session was created, update URL without reloading
-      if (!currentSessionId || currentSessionId !== response.sessionId) {
-        setCurrentSessionId(response.sessionId);
-        router.replace(`/chat?sessionId=${response.sessionId}`);
+      // If new session was created, update URL and add to sessions
+      if (!currentSessionId || currentSessionId !== result.sessionId) {
+        dispatch(setSessionId(result.sessionId));
+        router.replace(`/chat?sessionId=${result.sessionId}`);
+        
+        // Create a temporary session object and add it to Redux
+        const newSession: ChatSession = {
+          id: result.sessionId,
+          userId: '',
+          title: userQuestion.substring(0, 50) || 'New Chat',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        dispatch(addSession(newSession));
+        
+        // Also reload sessions to get the complete session data from backend
+        dispatch(loadSessions());
       }
-
-      // Replace optimistic message with real one (or just append if we didn't add optimistic)
-      // Since we added optimistic message, we should ideally replace it.
-      // But for simplicity, let's just update the last message or re-fetch.
-      // Actually, let's just append the real response and filter out the optimistic one if needed.
-      // Better yet, let's just update the messages list with the real response.
-      
-      const realMessage: ChatHistoryItem = {
-        id: response.id,
-        userId: '',
-        question: userQuestion,
-        answer: response.answer,
-        tokens: response.tokens,
-        createdAt: response.createdAt,
-      };
-
-      setMessages(prev => prev.map(msg => msg.id === tempId ? realMessage : msg));
-
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.error?.message ||
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to send message. Please try again.';
-
-      setError(errorMessage);
       console.error('Chat error:', err);
-      // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => msg.id !== tempId));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -186,7 +169,7 @@ export default function ChatInterface() {
               {messages.map(message => (
                 <ChatMessage key={message.id} message={message} />
               ))}
-              {isLoading && (
+              {loading && (
                 <div className="flex justify-start">
                   <div className="w-full max-w-3xl">
                     <div className="rounded-lg bg-white px-4 py-3 shadow-sm border border-gray-100">
@@ -221,15 +204,15 @@ export default function ChatInterface() {
               value={question}
               onChange={e => setQuestion(e.target.value)}
               placeholder="Type your message..."
-              disabled={isLoading}
+              disabled={loading}
               className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 disabled:cursor-not-allowed disabled:bg-slate-100 transition-all shadow-sm"
             />
             <button
               type="submit"
-              disabled={isLoading || !question.trim()}
+              disabled={loading || !question.trim()}
               className="rounded-xl bg-purple-600 px-6 py-3 font-semibold text-white transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm flex items-center"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
               ) : (
                 'Send'
