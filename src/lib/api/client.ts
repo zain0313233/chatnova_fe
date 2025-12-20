@@ -1,13 +1,12 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { API_CONFIG } from '../config';
 
 class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
-      baseURL: API_URL,
+      baseURL: API_CONFIG.getBaseURL(),
       headers: {
         'Content-Type': 'application/json',
       },

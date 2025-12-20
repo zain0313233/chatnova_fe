@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PaymentSuccessPopup from '@/components/subscriptions/PaymentSuccessPopup';
+import { API_CONFIG } from '@/lib/config';
 
 // Simple Check Icon Component
 const CheckIcon = ({ className }: { className?: string }) => (
@@ -69,14 +70,14 @@ export default function PricingPage() {
 
     try {
       // Get token from localStorage or your auth context
-      const token = localStorage.getItem('token'); 
+      const token = localStorage.getItem('auth_token'); 
       
       if (!token) {
         router.push('/login?redirect=/pricing');
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/subscriptions/create`, {
+      const response = await fetch(`${API_CONFIG.getBaseURL()}/api/subscriptions/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
