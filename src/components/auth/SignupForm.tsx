@@ -61,8 +61,21 @@ export default function SignupForm() {
             size: 'large',
             width: '100%',
             text: 'signup_with',
+            shape: 'pill', // Makes button rounded-full
           }
         );
+
+        // Add additional styling for rounded-full
+        if (googleButtonRef.current) {
+          const style = document.createElement('style');
+          style.textContent = `
+            #${googleButtonRef.current.id || 'google-signup-button'} div,
+            #${googleButtonRef.current.id || 'google-signup-button'} iframe {
+              border-radius: 9999px !important;
+            }
+          `;
+          document.head.appendChild(style);
+        }
       } else {
         // Retry after a short delay
         setTimeout(initGoogleSignIn, 100);
@@ -377,14 +390,25 @@ export default function SignupForm() {
               </div>
             </div>
 
-            <div ref={googleButtonRef} className="w-full flex justify-center">
-              {isGoogleLoading && (
-                <div className="flex items-center justify-center w-full py-2">
-                  <div className="inline-block h-5 w-5 animate-spin rounded-full border-b-2 border-purple-600"></div>
-                  <span className="ml-2 text-sm text-gray-600">Signing up with Google...</span>
-                </div>
-              )}
-            </div>
+            {isGoogleLoading ? (
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-full bg-white border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-3 sm:text-base flex items-center justify-center gap-2"
+              >
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-b-2 border-purple-600"></div>
+                <span>Signing up with Google...</span>
+              </button>
+            ) : (
+              <div 
+                ref={googleButtonRef} 
+                id="google-signup-button"
+                className="w-full flex justify-center [&>div]:w-full [&>div>div]:w-full [&>div>div>div]:rounded-full [&>div>div>div]:!rounded-full"
+                style={{
+                  borderRadius: '9999px',
+                }}
+              ></div>
+            )}
           </>
         )}
 

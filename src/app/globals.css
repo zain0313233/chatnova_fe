@@ -26,3 +26,18 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+/* Google Sign-In Button Styling - Rounded Full */
+#google-signin-button > div,
+#google-signin-button > div > div,
+#google-signin-button > div > div > div,
+#google-signup-button > div,
+#google-signup-button > div > div,
+#google-signup-button > div > div > div {
+  border-radius: 9999px !important;
+}
+
+#google-signin-button iframe,
+#google-signup-button iframe {
+  border-radius: 9999px !important;
+}
+
