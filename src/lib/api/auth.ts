@@ -115,6 +115,42 @@ export const authApi = {
     }
   },
 
+  // Google OAuth sign in
+  signInWithGoogle: async (idToken: string): Promise<AuthResponse> => {
+    const response = await apiClient.post('/api/auth/google', { idToken });
+
+    // Backend response structure: { message: string, data: { user: {...}, token: string, userType: 'user' } }
+    const responseData = response.data;
+
+    // Extract token, user, and userType from data object
+    const token = responseData?.data?.token || responseData?.token;
+    const user = responseData?.data?.user || responseData?.user;
+    const userType = responseData?.data?.userType || responseData?.userType || 'user';
+
+    if (!token || !user) {
+      throw new Error('Invalid response format: missing token or user data');
+    }
+
+    const authData: AuthResponse = {
+      token: String(token),
+      user: {
+        id: String(user.id || user._id || ''),
+        email: String(user.email || ''),
+        name: user.name ? String(user.name) : undefined,
+      },
+      userType: userType as UserType,
+    };
+
+    // Store token and userType
+    apiClientInstance.setToken(authData.token);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user_type', userType);
+      localStorage.setItem('auth_user', JSON.stringify(authData.user));
+    }
+
+    return authData;
+  },
+
   // Get current user (if token is valid)
   getCurrentUser: async (): Promise<AuthResponse['user'] | null> => {
     try {

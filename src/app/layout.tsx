@@ -16,8 +16,19 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
   return (
     <html lang="en">
+      <head>
+        {googleClientId && (
+          <script
+            src="https://accounts.google.com/gsi/client"
+            async
+            defer
+          />
+        )}
+      </head>
       <body className={inter.className}>
         <ReduxProvider>
           <AuthProvider>{children}</AuthProvider>

@@ -1,17 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth/context';
-import { LoginSchema } from '@/lib/api/auth';
+import { LoginSchema, authApi } from '@/lib/api/auth';
+import { GOOGLE_OAUTH_CONFIG } from '@/lib/config';
+import { useAppDispatch } from '@/store/hooks';
+import { setUser } from '@/store/features/auth/authSlice';
 
 type LoginFormData = z.infer<typeof LoginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
   const { login, userType } = useAuth();
+  const dispatch = useAppDispatch();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -21,7 +25,9 @@ export default function LoginForm() {
   >({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,6 +37,90 @@ export default function LoginForm() {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
     if (apiError) setApiError(null);
+  };
+
+  // Initialize Google Sign-In button
+  useEffect(() => {
+    if (!GOOGLE_OAUTH_CONFIG.isConfigured() || !googleButtonRef.current) {
+      return;
+    }
+
+    // Wait for Google script to load
+    const initGoogleSignIn = () => {
+      if (typeof window !== 'undefined' && (window as any).google) {
+        (window as any).google.accounts.id.initialize({
+          client_id: GOOGLE_OAUTH_CONFIG.getClientId(),
+          callback: handleGoogleSignIn,
+        });
+
+        (window as any).google.accounts.id.renderButton(
+          googleButtonRef.current,
+          {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'signin_with',
+          }
+        );
+      } else {
+        // Retry after a short delay
+        setTimeout(initGoogleSignIn, 100);
+      }
+    };
+
+    // Check if script is already loaded
+    if ((window as any).google) {
+      initGoogleSignIn();
+    } else {
+      // Wait for script to load
+      const checkInterval = setInterval(() => {
+        if ((window as any).google) {
+          clearInterval(checkInterval);
+          initGoogleSignIn();
+        }
+      }, 100);
+
+      // Cleanup after 10 seconds
+      setTimeout(() => clearInterval(checkInterval), 10000);
+    }
+  }, []);
+
+  const handleGoogleSignIn = async (response: any) => {
+    setIsGoogleLoading(true);
+    setApiError(null);
+
+    try {
+      const result = await authApi.signInWithGoogle(response.credential);
+      
+      // Update Redux store
+      dispatch(setUser(result.user));
+      
+      // Redirect based on user type
+      const currentUserType = result.userType || 'user';
+      if (currentUserType === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (error: any) {
+      let errorMessage = 'Google sign-in failed. Please try again.';
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.error?.message) {
+          errorMessage = data.error.message;
+        } else if (typeof data === 'string') {
+          errorMessage = data;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setApiError(errorMessage);
+      console.error('Google sign-in error:', error);
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -258,12 +348,34 @@ export default function LoginForm() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
             className="w-full rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:py-3 sm:text-base"
           >
             {isLoading ? 'Logging in...' : 'Log in'}
           </button>
         </form>
+
+        {GOOGLE_OAUTH_CONFIG.isConfigured() && (
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div ref={googleButtonRef} className="w-full flex justify-center">
+              {isGoogleLoading && (
+                <div className="flex items-center justify-center w-full py-2">
+                  <div className="inline-block h-5 w-5 animate-spin rounded-full border-b-2 border-purple-600"></div>
+                  <span className="ml-2 text-sm text-gray-600">Signing in with Google...</span>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="mt-4 text-center sm:mt-6">
           <p className="text-xs text-gray-600 sm:text-sm">
