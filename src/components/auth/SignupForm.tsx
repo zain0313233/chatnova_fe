@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth/context';
-import { RegisterSchema, authApi } from '@/lib/api/auth';
+import { RegisterSchema, authApi, Register } from '@/lib/api/auth';
 import { GOOGLE_OAUTH_CONFIG } from '@/lib/config';
 import { useAppDispatch } from '@/store/hooks';
 import { setUser } from '@/store/features/auth/authSlice';
@@ -52,6 +52,8 @@ export default function SignupForm() {
         (window as any).google.accounts.id.initialize({
           client_id: GOOGLE_OAUTH_CONFIG.getClientId(),
           callback: handleGoogleSignIn,
+          ux_mode: 'popup', // Use popup mode instead of redirect
+          use_fedcm_for_prompt: false, // Disable FedCM to avoid COOP issues
         });
 
         (window as any).google.accounts.id.renderButton(
@@ -154,8 +156,16 @@ export default function SignupForm() {
 
     setIsLoading(true);
     try {
-      await register(formData.email, formData.password, formData.name || '');
-      router.push('/dashboard');
+      // Signup now returns message instead of token (user needs to verify email)
+      const payload: Register = {
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+      };
+      await authApi.register(payload);
+      
+      // Redirect to email verification page
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       let errorMessage = 'Signup failed. Please try again.';
 
@@ -366,7 +376,7 @@ export default function SignupForm() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Password must be at least 6 characters
+              Password must be at least 8 characters with uppercase, lowercase, number, and special character
             </p>
           </div>
 

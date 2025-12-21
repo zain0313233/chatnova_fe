@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAdmin } from '@/lib/auth/adminContext';
 import { adminApi } from '@/lib/api/admin';
 
@@ -110,6 +111,15 @@ export default function AdminLoginPage() {
                 placeholder="Password"
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <Link
+              href="/admin/forgot-password"
+              className="text-xs font-medium text-purple-600 hover:text-purple-700 sm:text-sm"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <div>

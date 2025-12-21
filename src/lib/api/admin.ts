@@ -195,5 +195,69 @@ export const adminApi = {
   deleteUser: async (userId: string): Promise<void> => {
     await adminApiClient.getClient().delete(`/api/admin/users/${userId}`);
   },
+
+  // Admin forgot password
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await adminApiClient.getClient().post('/api/admin/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  // Verify password reset OTP for admin
+  verifyPasswordResetOTP: async (email: string, otp: string): Promise<{ verified: boolean; message: string }> => {
+    const response = await adminApiClient.getClient().post('/api/admin/auth/verify-password-reset-otp', { email, otp });
+    return response.data.data || response.data;
+  },
+
+  // Reset password for admin
+  resetPassword: async (email: string, otp: string, password: string): Promise<{ message: string }> => {
+    const response = await adminApiClient.getClient().post('/api/admin/auth/reset-password', { email, otp, password });
+    return response.data;
+  },
+
+  // Plan Management
+  getPlans: async (activeOnly: boolean = false): Promise<any[]> => {
+    const response = await adminApiClient.getClient().get(`/api/admin/plans${activeOnly ? '?activeOnly=true' : ''}`);
+    return response.data.data || [];
+  },
+
+  getPlanById: async (planId: string): Promise<any> => {
+    const response = await adminApiClient.getClient().get(`/api/admin/plans/${planId}`);
+    return response.data.data;
+  },
+
+  createPlan: async (planData: {
+    name: string;
+    description?: string;
+    tier: string;
+    billingCycle: 'monthly' | 'yearly';
+    price: number;
+    maxMessages: number;
+    features?: string[];
+    isPopular?: boolean;
+    sortOrder?: number;
+  }): Promise<any> => {
+    const response = await adminApiClient.getClient().post('/api/admin/plans', planData);
+    return response.data.data;
+  },
+
+  updatePlan: async (planId: string, planData: Partial<{
+    name: string;
+    description?: string;
+    tier: string;
+    billingCycle: 'monthly' | 'yearly';
+    price: number;
+    maxMessages: number;
+    features?: string[];
+    isActive?: boolean;
+    isPopular?: boolean;
+    sortOrder?: number;
+  }>): Promise<any> => {
+    const response = await adminApiClient.getClient().put(`/api/admin/plans/${planId}`, planData);
+    return response.data.data;
+  },
+
+  deletePlan: async (planId: string): Promise<void> => {
+    await adminApiClient.getClient().delete(`/api/admin/plans/${planId}`);
+  },
 };
 

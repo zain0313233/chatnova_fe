@@ -6,7 +6,7 @@
 // API Configuration
 export const API_CONFIG = {
   // Base URL for API requests
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
   
   // Validate that base URL is set
   getBaseURL(): string {

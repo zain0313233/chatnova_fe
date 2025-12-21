@@ -51,6 +51,8 @@ export default function LoginForm() {
         (window as any).google.accounts.id.initialize({
           client_id: GOOGLE_OAUTH_CONFIG.getClientId(),
           callback: handleGoogleSignIn,
+          ux_mode: 'popup', // Use popup mode instead of redirect
+          use_fedcm_for_prompt: false, // Disable FedCM to avoid COOP issues
         });
 
         (window as any).google.accounts.id.renderButton(
