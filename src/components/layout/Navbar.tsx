@@ -17,7 +17,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   };
 
   // Get user initials
-  const getInitials = (name?: string, email?: string): string => {
+  const getInitials = (name?: string | null, email?: string | null): string => {
     if (name) {
       const parts = name.trim().split(' ');
       if (parts.length >= 2) {

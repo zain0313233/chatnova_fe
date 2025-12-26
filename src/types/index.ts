@@ -3,6 +3,7 @@ export type {
   ChatQuestion,
   ChatMessage,
   ChatHistoryItem,
+  ChatSession,
 } from '../lib/api/chat';
 
 export type {

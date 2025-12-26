@@ -31,9 +31,8 @@ export function useSubscriptions() {
     setError(null);
 
     try {
-      const newSubscription = await subscriptionApi.create(data);
-      setSubscriptions(prev => [newSubscription, ...prev]);
-      return newSubscription;
+      const response = await subscriptionApi.createCheckout(data.tier as any, data.billingCycle as any);
+      return response.data;
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);

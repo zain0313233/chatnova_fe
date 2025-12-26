@@ -14,10 +14,10 @@ export default function ChatInterface() {
   const sessionIdParam = searchParams.get('sessionId');
   const isNewChat = searchParams.get('new') === 'true';
 
-  const { messagesBySession, loading, error, currentSessionId, isLoadingHistory, sessions } = useAppSelector((state) => state.chat);
+  const { messagesBySession, loading, error, currentSessionId, isLoadingHistory, sessions, isSessionsLoaded } = useAppSelector((state) => state.chat);
   const [question, setQuestion] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Get messages for current session
   const messages = currentSessionId ? (messagesBySession[currentSessionId] || []) : [];
 
@@ -32,48 +32,48 @@ export default function ChatInterface() {
 
   // Load sessions on mount if not already loaded
   useEffect(() => {
-    if (sessions.length === 0) {
+    // Only load if sessions are not yet loaded AND we're not already loading
+    if (!isSessionsLoaded && !loading) {
       dispatch(loadSessions());
     }
-  }, [dispatch, sessions.length]);
+  }, [dispatch, isSessionsLoaded, loading]);
 
   // Handle session changes via URL or New Chat
   useEffect(() => {
     if (isNewChat) {
-      dispatch(setSessionId(null));
-      dispatch(clearMessages(null));
+      if (currentSessionId !== null) {
+        dispatch(setSessionId(null));
+        dispatch(clearMessages(null));
+      }
       router.replace('/chat');
       return;
     }
 
     if (sessionIdParam) {
-      // Only load messages if they're not already in Redux (optimization)
       if (currentSessionId !== sessionIdParam) {
-        // Check if messages for this session already exist in Redux
-        if (!messagesBySession[sessionIdParam] || messagesBySession[sessionIdParam].length === 0) {
+        const hasMessages = messagesBySession[sessionIdParam]?.length > 0;
+        if (!hasMessages && !isLoadingHistory) {
           dispatch(loadSessionMessages(sessionIdParam));
-        } else {
-          // Messages already exist, just switch the session
+        } else if (hasMessages && currentSessionId !== sessionIdParam) {
           dispatch(setSessionId(sessionIdParam));
         }
       }
-    } else {
+    } else if (sessions.length > 0 && !currentSessionId && !isLoadingHistory) {
       // If no sessionId in URL but sessions exist, load the most recent session
-      if (sessions.length > 0 && !currentSessionId) {
-        const mostRecentSession = sessions[0]; // Sessions are typically sorted by most recent first
-        // Check if messages already exist
-        if (!messagesBySession[mostRecentSession.id] || messagesBySession[mostRecentSession.id].length === 0) {
-          dispatch(loadSessionMessages(mostRecentSession.id));
-        } else {
-          dispatch(setSessionId(mostRecentSession.id));
-        }
-        router.replace(`/chat?sessionId=${mostRecentSession.id}`, { scroll: false });
-      } else if (sessions.length === 0) {
-        dispatch(setSessionId(null));
-        dispatch(clearMessages(null));
+      const mostRecentSession = sessions[0];
+      const hasMessages = messagesBySession[mostRecentSession.id]?.length > 0;
+
+      if (!hasMessages) {
+        dispatch(loadSessionMessages(mostRecentSession.id));
+      } else {
+        dispatch(setSessionId(mostRecentSession.id));
       }
+      router.replace(`/chat?sessionId=${mostRecentSession.id}`, { scroll: false });
+    } else if (sessions.length === 0 && currentSessionId !== null && !isLoadingHistory && !loading) {
+      dispatch(setSessionId(null));
+      dispatch(clearMessages(null));
     }
-  }, [sessionIdParam, isNewChat, router, dispatch, currentSessionId, sessions, messagesBySession]);
+  }, [sessionIdParam, isNewChat, router, dispatch, currentSessionId, sessions.length, isLoadingHistory, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,16 +84,16 @@ export default function ChatInterface() {
     setQuestion('');
 
     try {
-      const result = await dispatch(sendMessage({ 
-        question: userQuestion, 
-        sessionId: currentSessionId || undefined 
+      const result = await dispatch(sendMessage({
+        question: userQuestion,
+        sessionId: currentSessionId || undefined
       })).unwrap();
 
       // If new session was created, update URL and add to sessions
       if (!currentSessionId || currentSessionId !== result.sessionId) {
         dispatch(setSessionId(result.sessionId));
         router.replace(`/chat?sessionId=${result.sessionId}`);
-        
+
         // Create a temporary session object and add it to Redux
         const newSession: ChatSession = {
           id: result.sessionId,
@@ -103,7 +103,7 @@ export default function ChatInterface() {
           updatedAt: new Date().toISOString(),
         };
         dispatch(addSession(newSession));
-        
+
         // Also reload sessions to get the complete session data from backend
         dispatch(loadSessions());
       }
@@ -153,7 +153,7 @@ export default function ChatInterface() {
                 <p className="text-slate-600 mb-8">
                   I can help you write code, answer questions, or just chat. Start a conversation below!
                 </p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                   <button onClick={() => setQuestion("What is Node.js?")} className="p-4 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition text-sm text-slate-700">
                     "What is Node.js?"

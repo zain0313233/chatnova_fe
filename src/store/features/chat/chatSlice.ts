@@ -9,6 +9,7 @@ interface ChatState {
     error: string | null;
     currentSessionId: string | null;
     isLoadingHistory: boolean;
+    isSessionsLoaded: boolean;
 }
 
 const initialState: ChatState = {
@@ -18,6 +19,7 @@ const initialState: ChatState = {
     error: null,
     currentSessionId: null,
     isLoadingHistory: false,
+    isSessionsLoaded: false,
 };
 
 export const sendMessage = createAsyncThunk(
@@ -104,12 +106,12 @@ const chatSlice = createSlice({
                 if (action.payload.sessionId) {
                     state.currentSessionId = action.payload.sessionId;
                     const sessionId = action.payload.sessionId;
-                    
+
                     // Initialize session messages array if it doesn't exist
                     if (!state.messagesBySession[sessionId]) {
                         state.messagesBySession[sessionId] = [];
                     }
-                    
+
                     // Check if message already exists to avoid duplicates
                     const messageExists = state.messagesBySession[sessionId].some(msg => msg.id === action.payload.id);
                     if (!messageExists) {
@@ -147,10 +149,12 @@ const chatSlice = createSlice({
             .addCase(loadSessions.fulfilled, (state, action) => {
                 state.loading = false;
                 state.sessions = action.payload;
+                state.isSessionsLoaded = true;
             })
             .addCase(loadSessions.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                state.isSessionsLoaded = true;
             })
             // Load Session Messages
             .addCase(loadSessionMessages.pending, (state) => {

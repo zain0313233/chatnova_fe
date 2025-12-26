@@ -31,6 +31,25 @@ export interface Plan {
   updatedAt: string;
 }
 
+export interface SubscriptionBundle {
+  id: string;
+  tier: string;
+  billingCycle: 'monthly' | 'yearly';
+  price: number;
+  maxMessages: number;
+  messagesUsed: number;
+  startDate: string;
+  endDate: string;
+  renewalDate?: string;
+  isActive: boolean;
+  autoRenew: boolean;
+}
+
+export interface CreateSubscription {
+  tier: string;
+  billingCycle: 'monthly' | 'yearly';
+}
+
 export const subscriptionApi = {
   // Get all active plans
   getPlans: async (): Promise<Plan[]> => {

@@ -104,7 +104,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { sessions } = useAppSelector((state) => state.chat);
+  const { sessions, loading, isSessionsLoaded } = useAppSelector((state) => state.chat);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
   const isCollapsed = externalCollapsed !== undefined ? externalCollapsed : false;
@@ -112,10 +112,10 @@ export default function Sidebar({
   const menuItems = isAdmin ? adminMenuItems : userMenuItems;
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin && !isSessionsLoaded && !loading) {
       dispatch(loadSessions());
     }
-  }, [pathname, dispatch, isAdmin]);
+  }, [dispatch, isAdmin, isSessionsLoaded, loading]);
 
   const handleNewChat = () => {
     router.push('/chat?new=true');
