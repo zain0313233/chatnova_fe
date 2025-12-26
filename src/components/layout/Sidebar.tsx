@@ -159,23 +159,23 @@ export default function Sidebar({
       >
         <div className="flex h-full flex-col">
           {/* Logo/Brand */}
-          <div className="flex h-16 items-center justify-between border-b border-gray-200 p-4">
-            {(!isCollapsed || isMobile) && (
-              <Link
-                href={isAdmin ? '/admin/dashboard' : '/dashboard'}
-                className="flex items-center space-x-2 focus:outline-none"
-                onClick={isMobile ? onClose : undefined}
-              >
-                <img
-                  src="/ChatNova_transparent-logo.png"
-                  alt="ChatNova Logo"
-                  className="h-8 w-8 object-contain"
-                />
+          <div className={`flex h-16 items-center border-b border-gray-200 p-4 ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'}`}>
+            <Link
+              href={isAdmin ? '/admin/dashboard' : '/dashboard'}
+              className="flex items-center space-x-2 focus:outline-none"
+              onClick={isMobile ? onClose : undefined}
+            >
+              <img
+                src="/ChatNova_transparent-logo.png"
+                alt="ChatNova Logo"
+                className="h-8 w-8 object-contain"
+              />
+              {(!isCollapsed || isMobile) && (
                 <span className="text-xl font-bold text-purple-600">
                   ChatNova
                 </span>
-              </Link>
-            )}
+              )}
+            </Link>
             {isMobile && (
               <button
                 onClick={onClose}

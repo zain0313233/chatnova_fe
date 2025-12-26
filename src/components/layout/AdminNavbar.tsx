@@ -5,9 +5,10 @@ import { useAuth } from '@/lib/auth/context';
 
 interface AdminNavbarProps {
   onMenuClick: () => void;
+  isCollapsed: boolean;
 }
 
-export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
+export default function AdminNavbar({ onMenuClick, isCollapsed }: AdminNavbarProps) {
   const router = useRouter();
   const { user, logout, userType } = useAuth();
 
@@ -61,9 +62,11 @@ export default function AdminNavbar({ onMenuClick }: AdminNavbarProps) {
                 />
               </svg>
             </button>
-            <h1 className="text-xl font-bold text-purple-600">
-              ChatNova
-            </h1>
+            {isCollapsed && (
+              <h1 className="text-xl font-bold text-purple-600">
+                ChatNova
+              </h1>
+            )}
           </div>
 
           {/* Right side - User profile and logout */}

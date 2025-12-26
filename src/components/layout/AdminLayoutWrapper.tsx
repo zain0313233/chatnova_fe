@@ -63,7 +63,7 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
         className={`flex flex-1 flex-col transition-all duration-300 ${isMobile ? 'w-full' : isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
           }`}
       >
-        <AdminNavbar onMenuClick={toggleSidebar} />
+        <AdminNavbar onMenuClick={toggleSidebar} isCollapsed={isCollapsed} />
         <main className="flex-1 overflow-y-auto">
           <div className="min-h-[calc(100vh-4rem)]">
             {children}

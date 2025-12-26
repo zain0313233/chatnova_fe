@@ -62,11 +62,10 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
         onCollapse={handleCollapse}
       />
       <div
-        className={`flex flex-1 flex-col transition-all duration-300 ${
-          isMobile ? '' : isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
-        }`}
+        className={`flex flex-1 flex-col transition-all duration-300 ${isMobile ? '' : isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
+          }`}
       >
-        <Navbar onMenuClick={toggleSidebar} />
+        <Navbar onMenuClick={toggleSidebar} isCollapsed={isCollapsed} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
