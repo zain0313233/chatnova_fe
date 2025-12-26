@@ -26,14 +26,14 @@ class AdminApiClient {
       }
     );
 
-    // Response interceptor for error handling
+    // // Response interceptor for error handling
     this.client.interceptors.response.use(
       response => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           // Handle unauthorized - clear all admin auth data
           this.clearAuth();
-          
+
           // Only redirect if not already on admin login page
           if (typeof window !== 'undefined') {
             const currentPath = window.location.pathname;
@@ -54,11 +54,12 @@ class AdminApiClient {
 
   private clearAuth(): void {
     if (typeof window === 'undefined') return;
-    
+
     // Clear admin token and user from localStorage
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
   }
+
 
   public setToken(token: string): void {
     if (typeof window === 'undefined') return;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminSidebar from './AdminSidebar';
+import Sidebar from './Sidebar';
 import AdminNavbar from './AdminNavbar';
 
 interface AdminLayoutWrapperProps {
@@ -11,19 +11,17 @@ interface AdminLayoutWrapperProps {
 export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(true); // Start as mobile to avoid hydration issues
+  const [isMobile, setIsMobile] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      // On mobile, close sidebar by default
       if (mobile) {
         setSidebarOpen(false);
       }
     };
 
-    // Check on mount
     if (typeof window !== 'undefined') {
       checkMobile();
     }
@@ -53,8 +51,8 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      <Sidebar
         isOpen={sidebarOpen}
         isMobile={isMobile}
         isCollapsed={isCollapsed}
@@ -62,12 +60,15 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
         onCollapse={handleCollapse}
       />
       <div
-        className={`flex flex-1 flex-col transition-all duration-300 ${
-          isMobile ? '' : isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
-        }`}
+        className={`flex flex-1 flex-col transition-all duration-300 ${isMobile ? 'w-full' : isCollapsed ? 'lg:pl-20' : 'lg:pl-64'
+          }`}
       >
         <AdminNavbar onMenuClick={toggleSidebar} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto">
+          <div className="min-h-[calc(100vh-4rem)]">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

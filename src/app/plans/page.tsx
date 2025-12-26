@@ -54,7 +54,7 @@ export default function PlansPage() {
 
   const handleSubscribe = async (plan: Plan) => {
     const token = localStorage.getItem('auth_token');
-    
+
     if (!token) {
       router.push('/login?redirect=/plans');
       return;
@@ -65,7 +65,7 @@ export default function PlansPage() {
 
     try {
       const response = await subscriptionApi.createCheckoutWithPlan(plan.id);
-      
+
       if (response.data?.checkoutUrl) {
         window.location.href = response.data.checkoutUrl;
       } else {
@@ -144,11 +144,10 @@ export default function PlansPage() {
                 {plans.map(plan => (
                   <div
                     key={plan.id}
-                    className={`relative rounded-lg border-2 bg-white p-6 shadow-sm transition hover:shadow-md ${
-                      plan.isPopular
-                        ? 'border-purple-500 ring-2 ring-purple-500'
-                        : 'border-gray-200'
-                    }`}
+                    className={`relative rounded-lg border-2 bg-white p-6 shadow-sm transition hover:shadow-md ${plan.isPopular
+                      ? 'border-purple-500 ring-2 ring-purple-500'
+                      : 'border-gray-200'
+                      }`}
                   >
                     {plan.isPopular && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -217,11 +216,10 @@ export default function PlansPage() {
                     <button
                       onClick={() => handleSubscribe(plan)}
                       disabled={loadingPlanId === plan.id}
-                      className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                        plan.isPopular
-                          ? 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'
-                          : 'bg-gray-900 hover:bg-gray-800 focus:ring-gray-500'
-                      }`}
+                      className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${plan.isPopular
+                        ? 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500'
+                        : 'bg-gray-900 hover:bg-gray-800 focus:ring-gray-500'
+                        }`}
                     >
                       {loadingPlanId === plan.id ? 'Processing...' : 'Subscribe Now'}
                     </button>

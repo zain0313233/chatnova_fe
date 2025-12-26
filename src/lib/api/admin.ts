@@ -1,5 +1,7 @@
 import { adminApiClient } from './adminClient';
 import { z } from 'zod';
+import { Plan } from './subscriptions';
+
 
 // Admin Auth Response Schema
 export const AdminAuthResponseSchema = z.object({
@@ -130,7 +132,7 @@ export const adminApi = {
 
     const response = await adminApiClient.getClient().get(`/api/admin/users?${params.toString()}`);
     const responseData = response.data?.data || response.data;
-    
+
     return {
       users: responseData.users.map((u: any) => UserListItemSchema.parse(u)),
       total: responseData.total,
@@ -156,7 +158,7 @@ export const adminApi = {
 
     const response = await adminApiClient.getClient().get(`/api/admin/subscriptions?${params.toString()}`);
     const responseData = response.data?.data || response.data;
-    
+
     return {
       subscriptions: responseData.subscriptions.map((s: any) => SubscriptionListItemSchema.parse(s)),
       total: responseData.total,
@@ -182,7 +184,7 @@ export const adminApi = {
 
     const response = await adminApiClient.getClient().get(`/api/admin/messages?${params.toString()}`);
     const responseData = response.data?.data || response.data;
-    
+
     return {
       messages: responseData.messages.map((m: any) => MessageListItemSchema.parse(m)),
       total: responseData.total,
@@ -215,12 +217,12 @@ export const adminApi = {
   },
 
   // Plan Management
-  getPlans: async (activeOnly: boolean = false): Promise<any[]> => {
+  getPlans: async (activeOnly: boolean = false): Promise<Plan[]> => {
     const response = await adminApiClient.getClient().get(`/api/admin/plans${activeOnly ? '?activeOnly=true' : ''}`);
     return response.data.data || [];
   },
 
-  getPlanById: async (planId: string): Promise<any> => {
+  getPlanById: async (planId: string): Promise<Plan> => {
     const response = await adminApiClient.getClient().get(`/api/admin/plans/${planId}`);
     return response.data.data;
   },

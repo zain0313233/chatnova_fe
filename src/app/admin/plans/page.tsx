@@ -3,44 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api/admin';
-import ProtectedAdminRoute from '@/components/admin/ProtectedAdminRoute';
-import AdminLayoutWrapper from '@/components/layout/AdminLayoutWrapper';
-
-interface Plan {
-  id: string;
-  name: string;
-  description: string | null;
-  tier: string;
-  billingCycle: 'monthly' | 'yearly';
-  price: number;
-  maxMessages: number;
-  features: string[];
-  isActive: boolean;
-  isPopular: boolean;
-  sortOrder: number;
-  stripeProductId: string | null;
-  stripePriceId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Plan {
-  id: string;
-  name: string;
-  description: string | null;
-  tier: string;
-  billingCycle: 'monthly' | 'yearly';
-  price: number;
-  maxMessages: number;
-  features: string[];
-  isActive: boolean;
-  isPopular: boolean;
-  sortOrder: number;
-  stripeProductId: string | null;
-  stripePriceId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Plan } from '@/lib/api/subscriptions';
 
 export default function AdminPlansPage() {
   const router = useRouter();
@@ -106,189 +69,177 @@ export default function AdminPlansPage() {
 
   if (showCreateForm) {
     return (
-      <ProtectedAdminRoute>
-        <AdminLayoutWrapper>
-          <div className="flex-1 overflow-y-auto px-4 py-8">
-            <CreatePlanForm
-              onSuccess={() => {
-                setShowCreateForm(false);
-                loadPlans();
-              }}
-              onCancel={() => setShowCreateForm(false)}
-            />
-          </div>
-        </AdminLayoutWrapper>
-      </ProtectedAdminRoute>
+      <div className="flex-1 overflow-y-auto px-4 py-8">
+        <CreatePlanForm
+          onSuccess={() => {
+            setShowCreateForm(false);
+            loadPlans();
+          }}
+          onCancel={() => setShowCreateForm(false)}
+        />
+      </div>
     );
   }
 
   if (editingPlan) {
     return (
-      <ProtectedAdminRoute>
-        <AdminLayoutWrapper>
-          <div className="flex-1 overflow-y-auto px-4 py-8">
-            <EditPlanForm
-              plan={editingPlan}
-              onSuccess={() => {
-                setEditingPlan(null);
-                loadPlans();
-              }}
-              onCancel={() => setEditingPlan(null)}
-            />
-          </div>
-        </AdminLayoutWrapper>
-      </ProtectedAdminRoute>
+      <div className="flex-1 overflow-y-auto px-4 py-8">
+        <EditPlanForm
+          plan={editingPlan}
+          onSuccess={() => {
+            setEditingPlan(null);
+            loadPlans();
+          }}
+          onCancel={() => setEditingPlan(null)}
+        />
+      </div>
     );
   }
 
   return (
-    <ProtectedAdminRoute>
-      <AdminLayoutWrapper>
-        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:py-8">
-        <div className="mx-auto max-w-7xl">
-          {/* Header */}
-          <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                Plan Management
-              </h1>
-              <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
-                Create and manage subscription plans
-              </p>
-            </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="w-full rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
-            >
-              + Create Plan
-            </button>
+    <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              Plan Management
+            </h1>
+            <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
+              Create and manage subscription plans
+            </p>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-              {error}
-            </div>
-          )}
-
-          {/* Loading State */}
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600"></div>
-                <p className="mt-4 text-gray-600">Loading plans...</p>
-              </div>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Tier
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Billing
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Messages
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Stripe
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {plans.map(plan => (
-                    <tr key={plan.id} className="hover:bg-gray-50">
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{plan.name}</div>
-                        {plan.description && (
-                          <div className="text-xs text-gray-500">{plan.description}</div>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize">
-                          {plan.tier}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600 capitalize">
-                        {plan.billingCycle}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                        ${plan.price.toFixed(2)}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                        {plan.maxMessages === 999999 ? 'Unlimited' : plan.maxMessages.toLocaleString()}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {plan.isActive ? (
-                          <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
-                            Inactive
-                          </span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {plan.stripePriceId ? (
-                          <span className="text-xs text-green-600">✓ Synced</span>
-                        ) : (
-                          <span className="text-xs text-red-600">✗ Not synced</span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setEditingPlan(plan)}
-                            className="text-purple-600 hover:text-purple-900"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleToggleActive(plan)}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            {plan.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(plan.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {plans.length === 0 && (
-                <div className="px-6 py-12 text-center">
-                  <p className="text-sm text-gray-600">No plans found. Create your first plan!</p>
-                </div>
-              )}
-            </div>
-          )}
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="w-full rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
+          >
+            + Create Plan
+          </button>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600"></div>
+              <p className="mt-4 text-gray-600">Loading plans...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Tier
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Billing
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Messages
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Stripe
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {plans.map(plan => (
+                  <tr key={plan.id} className="hover:bg-gray-50">
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{plan.name}</div>
+                      {plan.description && (
+                        <div className="text-xs text-gray-500">{plan.description}</div>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 capitalize">
+                        {plan.tier}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600 capitalize">
+                      {plan.billingCycle}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                      ${plan.price.toFixed(2)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
+                      {plan.maxMessages === 999999 ? 'Unlimited' : plan.maxMessages.toLocaleString()}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {plan.isActive ? (
+                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {plan.stripePriceId ? (
+                        <span className="text-xs text-green-600">✓ Synced</span>
+                      ) : (
+                        <span className="text-xs text-red-600">✗ Not synced</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingPlan(plan)}
+                          className="text-purple-600 hover:text-purple-900"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(plan)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          {plan.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(plan.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {plans.length === 0 && (
+              <div className="px-6 py-12 text-center">
+                <p className="text-sm text-gray-600">No plans found. Create your first plan!</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      </AdminLayoutWrapper>
-    </ProtectedAdminRoute>
+    </div>
   );
 }
 
@@ -706,4 +657,3 @@ function EditPlanForm({ plan, onSuccess, onCancel }: { plan: Plan; onSuccess: ()
     </div>
   );
 }
-
