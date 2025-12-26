@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { chatApi, ChatSession } from '@/lib/api/chat';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { loadSessions } from '@/store/features/chat/chatSlice';
 import { Plus, MessageSquare } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,7 +24,8 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const dispatch = useAppDispatch();
+  const { sessions } = useAppSelector((state) => state.chat);
 
   // Use external collapsed state if provided, otherwise default to false
   const isCollapsed =
@@ -45,16 +47,8 @@ export default function Sidebar({
 
   // Fetch sessions if we are on chat page or just generally to show history
   useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        const fetchedSessions = await chatApi.getSessions();
-        setSessions(fetchedSessions);
-      } catch (err) {
-        console.error('Failed to load sessions', err);
-      }
-    };
-    loadSessions();
-  }, [pathname]); // Reload when path changes (e.g. new chat created)
+    dispatch(loadSessions());
+  }, [pathname, dispatch]); // Reload when path changes (e.g. new chat created)
 
   const handleNewChat = () => {
     // Navigate to chat page with no session ID (or handle in ChatInterface)

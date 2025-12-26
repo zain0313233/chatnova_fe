@@ -4,7 +4,10 @@ import { ChatResponse } from '../lib/api/chat';
 
 export function useChat() {
   const dispatch = useAppDispatch();
-  const { messages, loading, error, currentSessionId } = useAppSelector((state) => state.chat);
+  const { messagesBySession, loading, error, currentSessionId } = useAppSelector((state) => state.chat);
+
+  // Get messages for current session
+  const messages = currentSessionId ? (messagesBySession[currentSessionId] || []) : [];
 
   const sendMessage = async (question: string) => {
     // We cast the result to any to avoid strict type checking on the unwrap payload vs return type for now,
