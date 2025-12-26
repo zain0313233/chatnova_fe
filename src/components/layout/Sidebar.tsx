@@ -163,10 +163,17 @@ export default function Sidebar({
             {(!isCollapsed || isMobile) && (
               <Link
                 href={isAdmin ? '/admin/dashboard' : '/dashboard'}
-                className="text-xl font-bold text-purple-600 focus:outline-none"
+                className="flex items-center space-x-2 focus:outline-none"
                 onClick={isMobile ? onClose : undefined}
               >
-                ChatNova
+                <img
+                  src="/ChatNova_transparent-logo.png"
+                  alt="ChatNova Logo"
+                  className="h-8 w-8 object-contain"
+                />
+                <span className="text-xl font-bold text-purple-600">
+                  ChatNova
+                </span>
               </Link>
             )}
             {isMobile && (

@@ -20,19 +20,25 @@ export default function AdminSidebar() {
 
   return (
     <div className="flex h-screen w-64 flex-col bg-gray-900 text-white">
-      <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold">ChatNova Admin</h1>
+      <div className="flex h-16 items-center justify-center border-b border-gray-800 px-4">
+        <Link href="/admin/dashboard" className="flex items-center space-x-2">
+          <img
+            src="/ChatNova_transparent-logo.png"
+            alt="ChatNova Logo"
+            className="h-8 w-8 object-contain"
+          />
+          <h1 className="text-xl font-bold text-white">ChatNova Admin</h1>
+        </Link>
       </div>
       <nav className="flex-1 space-y-1 px-2 py-4">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-              isActive(item.href)
-                ? 'bg-purple-600 text-white'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            }`}
+            className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${isActive(item.href)
+              ? 'bg-purple-600 text-white'
+              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+              }`}
           >
             <span className="text-xl">{item.icon}</span>
             <span>{item.label}</span>
