@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { loadSessions } from '@/store/features/chat/chatSlice';
-import { useAuth } from '@/lib/auth/context';
-import { useAdmin } from '@/lib/auth/adminContext';
 import {
   LayoutDashboard,
   Users,
@@ -106,8 +104,6 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user } = useAuth();
-  const { admin } = useAdmin();
   const { sessions } = useAppSelector((state) => state.chat);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
