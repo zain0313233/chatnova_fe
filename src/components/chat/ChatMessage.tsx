@@ -1,13 +1,13 @@
 'use client';
 
-import { ChatHistoryItem } from '@/types';
+import { ChatHistoryItem, ChatMessage as ChatMessageType } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface ChatMessageProps {
-  message: ChatHistoryItem;
+  message: ChatMessageType | ChatHistoryItem;
 }
 
 export default function ChatMessage({ message }: ChatMessageProps) {
@@ -43,7 +43,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
               remarkPlugins={[remarkGfm]}
               components={{
                 code(props) {
-                  const {children, className, node, ref, ...rest} = props
+                  const { children, className, node, ref, ...rest } = props
                   const match = /language-(\w+)/.exec(className || '')
                   return match ? (
                     <SyntaxHighlighter
